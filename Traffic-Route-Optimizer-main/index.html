@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Traffic Route Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #0a0c10;
+  --surface:   #111318;
+  --surface2:  #181c23;
+  --surface3:  #1e232d;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.13);
+  --text:      #e8eaf0;
+  --muted:     #7a7f8e;
+  --accent:    #6366f1;
+  --accent2:   #818cf8;
+  --green:     #10b981;
+  --red:       #ef4444;
+  --blue:      #3b82f6;
+  --amber:     #f59e0b;
+  --purple:    #4c1d95;
+  --orange:    #f97316;
+  --radius:    10px;
+  --radius-lg: 14px;
+  --mono:      'JetBrains Mono', monospace;
+  --sans:      'Space Grotesk', system-ui, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Animated grid background ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Layout ── */
+#root {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,12,16,0.85);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.logo span {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ── Main content ── */
+main {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── Left sidebar (tools) ── */
+#sidebar-left {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  background: var(--surface);
+}
+
+/* ── Center (grid) ── */
+#center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  gap: 14px;
+  overflow: hidden;
+}
+
+/* ── Right sidebar (stats) ── */
+#sidebar-right {
+  width: 240px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  background: var(--surface);
+}
+
+/* ── Section labels ── */
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+/* ── Tool buttons ── */
+.tool-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+}
+.tool-btn:hover { background: var(--surface2); color: var(--text); }
+.tool-btn.active {
+  background: var(--surface3);
+  border-color: var(--border2);
+  color: var(--text);
+}
+.tool-dot {
+  width: 12px; height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── Selects & inputs ── */
+select {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a7f8e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+select:focus { border-color: var(--accent); }
+select:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.select-wrap label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+/* ── Buttons ── */
+.btn {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+  justify-content: center;
+  width: 100%;
+}
+.btn:hover:not(:disabled) { background: var(--surface3); border-color: var(--border2); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent2);
+  color: #fff;
+  font-size: 13px;
+  padding: 10px 20px;
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent2); }
+
+.btn-primary.searching {
+  background: var(--surface3);
+  border-color: var(--border2);
+  color: var(--muted);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+.btn-row { display: flex; gap: 6px; }
+.btn-row .btn { flex: 1; font-size: 11px; padding: 7px 8px; }
+
+/* ── Algorithm pill toggle ── */
+.algo-toggle {
+  display: flex;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+  gap: 3px;
+}
+.algo-toggle button {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.algo-toggle button.active {
+  background: var(--surface3);
+  color: var(--text);
+  border: 1px solid var(--border2);
+}
+
+/* ── Grid ── */
+#grid-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#grid {
+  display: grid;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border2);
+  user-select: none;
+  cursor: crosshair;
+  box-shadow: 0 0 40px rgba(99,102,241,0.08);
+}
+
+.cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: rgba(255,255,255,0.9);
+  border: 0.5px solid rgba(255,255,255,0.04);
+  transition: background 0.05s;
+  position: relative;
+  cursor: crosshair;
+}
+.cell:hover { filter: brightness(1.15); }
+
+/* ── Stats cards ── */
+.stat-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.stat-card-title { font-size: 11px; font-weight: 600; color: var(--muted); }
+.stat-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.stat-badge.astar  { background: rgba(99,102,241,0.15); color: var(--accent2); }
+.stat-badge.ucs    { background: rgba(245,158,11,0.12); color: var(--amber); }
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-row-label { color: var(--muted); }
+.stat-row-val {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+.val-astar { color: var(--accent2); }
+.val-ucs   { color: var(--amber); }
+
+/* ── Insight box ── */
+.insight-box {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.insight-box .insight-line { display: block; }
+.insight-box .highlight { color: var(--green); font-weight: 600; }
+
+/* ── Legend ── */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.legend-swatch {
+  width: 14px; height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+/* ── Status bar ── */
+#statusbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface);
+}
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+.status-dot.searching { background: var(--amber); animation: pulse 0.8s infinite; }
+.status-dot.error     { background: var(--red); }
+
+/* ── No path message ── */
+.no-path {
+  padding: 10px 12px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: var(--radius);
+  font-size: 11px;
+  color: #fca5a5;
+  display: none;
+}
+
+/* ── Progress bar ── */
+.progress-wrap {
+  height: 3px;
+  background: var(--surface2);
+  border-radius: 2px;
+  overflow: hidden;
+  display: none;
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #a78bfa);
+  width: 0%;
+  transition: width 0.05s;
+  border-radius: 2px;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  #sidebar-left { width: 180px; }
+  #sidebar-right { width: 200px; }
+}
+@media (max-width: 700px) {
+  main { flex-direction: column; overflow: auto; }
+  #sidebar-left, #sidebar-right { width: 100%; border: none; border-bottom: 1px solid var(--border); }
+  #center { padding: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div id="root">
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🗺</div>
+      <h1>Traffic Route Optimizer <span>v2.0</span></h1>
+    </div>
+    <div class="header-controls">
+      <div class="algo-toggle">
+        <button id="toggleAstar" class="active" onclick="setAlgo('astar')">A*</button>
+        <button id="toggleUcs"   onclick="setAlgo('ucs')">UCS</button>
+      </div>
+      <button class="btn btn-primary" id="btnFind" onclick="findPath()" style="width:auto">
+        <span id="btnLabel">Find Path</span>
+        <span>↗</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── Left sidebar ── -->
+    <aside id="sidebar-left">
+
+      <div>
+        <div class="section-label">Draw Tools</div>
+        <div class="tool-group" id="toolGroup">
+          <button class="tool-btn active" data-tool="start" onclick="setTool('start')">
+            <div class="tool-dot" style="background:#10b981"></div>Set Start
+          </button>
+          <button class="tool-btn" data-tool="end" onclick="setTool('end')">
+            <div class="tool-dot" style="background:#ef4444"></div>Set End
+          </button>
+          <button class="tool-btn" data-tool="b" onclick="setTool('b')">
+            <div class="tool-dot" style="background:#4c1d95"></div>Block Road
+          </button>
+          <button class="tool-btn" data-tool="t" onclick="setTool('t')">
+            <div class="tool-dot" style="background:rgba(245,158,11,0.6)"></div>Light Traffic ×3
+          </button>
+          <button class="tool-btn" data-tool="h" onclick="setTool('h')">
+            <div class="tool-dot" style="background:rgba(220,38,38,0.6)"></div>Heavy Traffic ×6
+          </button>
+          <button class="tool-btn" data-tool="erase" onclick="setTool('erase')">
+            <div class="tool-dot" style="background:var(--surface3);border:1px solid var(--border2)"></div>Erase
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Algorithm</div>
+        <div class="select-wrap">
+          <label>Heuristic (A* only)</label>
+          <select id="heurSel" onchange="heur=this.value">
+            <option value="euc">Euclidean distance</option>
+            <option value="man">Manhattan distance</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Map</div>
+        <div class="btn-row">
+          <button class="btn" onclick="initMap(true)">⚄ Random</button>
+          <button class="btn" onclick="initMap(false)">↺ Clear</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Legend</div>
+        <div class="legend">
+          <div class="legend-row"><div class="legend-swatch" style="background:#10b981"></div>Start node</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#ef4444"></div>End node</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#3b82f6"></div>Optimal path</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:rgba(251,191,36,0.5)"></div>Explored nodes</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:rgba(245,158,11,0.35)"></div>Light traffic ×3</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:rgba(220,38,38,0.35)"></div>Heavy traffic ×6</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#4c1d95"></div>Blocked road</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── Center grid ── -->
+    <section id="center">
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div id="grid-wrap">
+        <div id="grid"></div>
+      </div>
+    </section>
+
+    <!-- ── Right sidebar ── -->
+    <aside id="sidebar-right">
+
+      <div>
+        <div class="section-label">Comparison</div>
+
+        <div class="stat-card" style="margin-bottom:10px">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Results</span>
+            <div style="display:flex;gap:5px">
+              <span class="stat-badge astar">A*</span>
+              <span class="stat-badge ucs">UCS</span>
+            </div>
+          </div>
+          <div id="statRows">
+            <div class="stat-row">
+              <span class="stat-row-label">Path cost</span>
+              <div style="display:flex;gap:10px">
+                <span class="stat-row-val val-astar" id="s-astar-cost">—</span>
+                <span class="stat-row-val val-ucs"   id="s-ucs-cost">—</span>
+              </div>
+            </div>
+            <div class="stat-row">
+              <span class="stat-row-label">Nodes explored</span>
+              <div style="display:flex;gap:10px">
+                <span class="stat-row-val val-astar" id="s-astar-n">—</span>
+                <span class="stat-row-val val-ucs"   id="s-ucs-n">—</span>
+              </div>
+            </div>
+            <div class="stat-row">
+              <span class="stat-row-label">Path length</span>
+              <div style="display:flex;gap:10px">
+                <span class="stat-row-val val-astar" id="s-astar-len">—</span>
+                <span class="stat-row-val val-ucs"   id="s-ucs-len">—</span>
+              </div>
+            </div>
+            <div class="stat-row">
+              <span class="stat-row-label">Time (ms)</span>
+              <div style="display:flex;gap:10px">
+                <span class="stat-row-val val-astar" id="s-astar-ms">—</span>
+                <span class="stat-row-val val-ucs"   id="s-ucs-ms">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="no-path" id="noPathMsg">⚠ No path found — the destination is unreachable.</div>
+        <div class="insight-box" id="insightBox">Run the algorithm to see comparison insights.</div>
+      </div>
+
+      <div>
+        <div class="section-label">How it works</div>
+        <div class="insight-box" id="algoExplain" style="font-size:11px;line-height:1.7">
+          <strong style="color:var(--accent2)">A* Search</strong><br/>
+          Uses f(n) = g(n) + h(n) where g is cost-so-far and h is a heuristic estimate to goal. Explores far fewer nodes while guaranteeing the optimal path.
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Grid Info</div>
+        <div class="stat-card">
+          <div class="stat-row">
+            <span class="stat-row-label">Grid size</span>
+            <span class="stat-row-val" style="color:var(--muted)" id="info-size">13 × 20</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-row-label">Total cells</span>
+            <span class="stat-row-val" style="color:var(--muted)" id="info-cells">260</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-row-label">Blocked</span>
+            <span class="stat-row-val" style="color:#a78bfa" id="info-blocked">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-row-label">Traffic cells</span>
+            <span class="stat-row-val" style="color:var(--amber)" id="info-traffic">0</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- ── Status bar ── -->
+  <div id="statusbar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Ready — select a tool and paint the map, then click Find Path.</span>
+    <span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.2)">A* + UCS Pathfinding</span>
+  </div>
+
+</div>
+
+<script>
+const ROWS = 13, COLS = 20;
+const COST = { e:1, t:3, h:6 };
+const CELL_BG = {
+  start:    '#10b981',
+  end:      '#ef4444',
+  path:     '#3b82f6',
+  explored: 'rgba(251,191,36,0.38)',
+  t:        'rgba(245,158,11,0.28)',
+  h:        'rgba(220,38,38,0.28)',
+  e:        '#181c23',
+  b:        '#4c1d95',
+};
+
+let grid, startPos, endPos, tool, algo, heur, results, animTimer, busy, painting;
+
+/* ─── Init ─── */
+function initMap(random) {
+  if (busy) return;
+  grid    = random ? mkRandom() : mkEmpty();
+  startPos = [1, 1];
+  endPos   = [ROWS-2, COLS-2];
+  tool     = 'start';
+  algo     = algo || 'astar';
+  heur     = heur || 'euc';
+  results  = null;
+  animTimer = null;
+  busy = false; painting = false;
+  buildGridDOM();
+  updateToolBtns();
+  updateAlgoExplain();
+  resetStats();
+  updateGridInfo();
+  setStatus('ready', 'Ready — paint the map then click Find Path.');
+}
+
+const mkEmpty  = () => Array.from({length:ROWS}, () => Array(COLS).fill('e'));
+const mkRandom = () => Array.from({length:ROWS}, () => Array.from({length:COLS}, () => {
+  const r = Math.random();
+  return r < .13 ? 'b' : r < .25 ? 'h' : r < .40 ? 't' : 'e';
+}));
+
+/* ─── Grid DOM ─── */
+function buildGridDOM() {
+  const container = document.getElementById('grid');
+  container.innerHTML = '';
+  // Responsive cell size
+  const avail = Math.min(
+    document.getElementById('center').clientWidth - 40,
+    document.getElementById('center').clientHeight - 60
+  );
+  const cellSize = Math.max(24, Math.floor(Math.min(avail / COLS, (avail * 0.75) / ROWS)));
+  container.style.gridTemplateColumns = `repeat(${COLS}, ${cellSize}px)`;
+  container.style.width  = `${cellSize * COLS}px`;
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const d = document.createElement('div');
+      d.className = 'cell';
+      d.dataset.r = r; d.dataset.c = c;
+      d.style.width  = `${cellSize}px`;
+      d.style.height = `${cellSize}px`;
+      d.addEventListener('mousedown', e => { painting = true; applyTool(r, c); e.preventDefault(); });
+      d.addEventListener('mouseenter', () => { if (painting && ['b','t','h','erase'].includes(tool)) applyTool(r, c); });
+      container.appendChild(d);
+    }
+  }
+  container.addEventListener('mouseup',    () => painting = false);
+  container.addEventListener('mouseleave', () => painting = false);
+  document.addEventListener('mouseup',     () => painting = false);
+  renderAll();
+}
+
+const cellEl = (r, c) => document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+
+function renderAll(expArr, pathSet) {
+  const expSet = new Set(expArr || []);
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      renderCell(r, c, expSet, pathSet);
+}
+
+function renderCell(r, c, expSet, pathSet) {
+  const d = cellEl(r, c); if (!d) return;
+  const k = `${r},${c}`;
+  const isS = startPos[0]===r && startPos[1]===c;
+  const isE = endPos[0]===r   && endPos[1]===c;
+  const cell = grid[r][c];
+  let bg;
+  if      (isS)                  bg = CELL_BG.start;
+  else if (isE)                  bg = CELL_BG.end;
+  else if (cell === 'b')         bg = CELL_BG.b;
+  else if (pathSet?.has(k))      bg = CELL_BG.path;
+  else if (expSet?.has(k))       bg = CELL_BG.explored;
+  else                           bg = CELL_BG[cell] || CELL_BG.e;
+  d.style.background = bg;
+  d.textContent = isS ? 'S' : isE ? 'E' : '';
+}
+
+/* ─── Tool application ─── */
+function applyTool(r, c) {
+  if (busy) return;
+  const ck = `${r},${c}`;
+  if (ck === `${startPos[0]},${startPos[1]}` || ck === `${endPos[0]},${endPos[1]}`) return;
+  if (tool === 'start') { startPos = [r, c]; results = null; renderAll(); }
+  else if (tool === 'end') { endPos = [r, c]; results = null; renderAll(); }
+  else {
+    grid[r][c] = tool === 'erase' ? 'e' : tool;
+    results = null;
+    renderCell(r, c, null, null);
+  }
+  updateGridInfo();
+  resetStats();
+}
+
+/* ─── Setters ─── */
+function setTool(t) {
+  tool = t;
+  updateToolBtns();
+}
+function setAlgo(a) {
+  algo = a;
+  document.getElementById('toggleAstar').classList.toggle('active', a === 'astar');
+  document.getElementById('toggleUcs').classList.toggle('active',   a === 'ucs');
+  document.getElementById('heurSel').disabled = a !== 'astar';
+  updateAlgoExplain();
+  if (results) renderAll(null, new Set(results[algo].path));
+}
+
+function updateToolBtns() {
+  document.querySelectorAll('.tool-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tool === tool);
+  });
+}
+
+function updateAlgoExplain() {
+  const h = (document.getElementById('heurSel')?.value || heur) === 'man' ? 'Manhattan' : 'Euclidean';
+  document.getElementById('algoExplain').innerHTML = algo === 'astar'
+    ? `<strong style="color:var(--accent2)">A* Search</strong><br/>Uses f(n) = g(n) + h(n) with <em>${h}</em> heuristic. Guides search toward the goal, exploring far fewer nodes while guaranteeing the optimal path.`
+    : `<strong style="color:var(--amber)">Uniform Cost Search</strong><br/>Expands nodes by cumulative cost g(n) only — no heuristic. Dijkstra's algorithm. Always optimal, explores more nodes than A*.`;
+}
+
+/* ─── Min-Heap ─── */
+class Heap {
+  constructor() { this.d = []; }
+  push(v) { this.d.push(v); this._up(this.d.length-1); }
+  pop()   { const t=this.d[0],l=this.d.pop(); if(this.d.length){this.d[0]=l;this._dn(0);} return t; }
+  get sz(){ return this.d.length; }
+  _up(i)  { while(i>0){const p=(i-1)>>1;if(this.d[p][0]<=this.d[i][0])break;[this.d[p],this.d[i]]=[this.d[i],this.d[p]];i=p;} }
+  _dn(i)  { for(;;){let m=i,l=2*i+1,r=l+1,n=this.d.length;if(l<n&&this.d[l][0]<this.d[m][0])m=l;if(r<n&&this.d[r][0]<this.d[m][0])m=r;if(m===i)break;[this.d[m],this.d[i]]=[this.d[i],this.d[m]];i=m;} }
+}
+
+const euc = (r1,c1,r2,c2) => Math.sqrt((r2-r1)**2+(c2-c1)**2);
+const man = (r1,c1,r2,c2) => Math.abs(r2-r1)+Math.abs(c2-c1);
+
+function nbrs(r, c) {
+  return [[-1,0],[1,0],[0,-1],[0,1]]
+    .map(([dr,dc]) => [r+dr, c+dc])
+    .filter(([nr,nc]) => nr>=0 && nr<ROWS && nc>=0 && nc<COLS && grid[nr][nc] !== 'b')
+    .map(([nr,nc]) => [nr, nc, COST[grid[nr][nc]]]);
+}
+
+function runAlgo(hFn) {
+  const [sr,sc] = startPos, [er,ec] = endPos;
+  const dist={}, prev={}, vis=new Set(), explored=[];
+  const pq = new Heap();
+  dist[`${sr},${sc}`] = 0;
+  pq.push([hFn ? hFn(sr,sc,er,ec) : 0, 0, sr, sc]);
+  const t0 = performance.now();
+  while (pq.sz > 0) {
+    const [,g,r,c] = pq.pop(), k = `${r},${c}`;
+    if (vis.has(k)) continue;
+    vis.add(k); explored.push(k);
+    if (r===er && c===ec) break;
+    for (const [nr,nc,cost] of nbrs(r,c)) {
+      const nk=`${nr},${nc}`, ng=g+cost;
+      if (dist[nk]===undefined || ng<dist[nk]) {
+        dist[nk]=ng; prev[nk]=k;
+        pq.push([ng+(hFn?hFn(nr,nc,er,ec):0), ng, nr, nc]);
+      }
+    }
+  }
+  const ms = (performance.now()-t0).toFixed(3);
+  const ek=`${er},${ec}`, sk=`${sr},${sc}`;
+  const path=[]; let cur=ek;
+  while(cur&&prev[cur]){path.unshift(cur);cur=prev[cur];}
+  if(cur)path.unshift(cur);
+  const ok = path.length && path[0]===sk && path[path.length-1]===ek;
+  return { path:ok?path:[], cost:ok?dist[ek]:null, explored, ms, n:explored.length };
+}
+
+/* ─── Find path ─── */
+function findPath() {
+  if (busy) return;
+  if (animTimer) { clearInterval(animTimer); animTimer = null; }
+  const hFn = (document.getElementById('heurSel').value==='man') ? man : euc;
+  const astar = runAlgo(hFn);
+  const ucsR  = runAlgo(null);
+  results = { astar, ucs: ucsR };
+  updateStats(astar, ucsR);
+
+  const res = algo === 'astar' ? astar : ucsR;
+  if (!res.explored.length) { renderAll(); return; }
+
+  busy = true;
+  const btn = document.getElementById('btnFind');
+  btn.classList.add('searching');
+  document.getElementById('btnLabel').textContent = 'Searching';
+  document.getElementById('statusDot').className = 'status-dot searching';
+  setStatus('searching', `Animating ${res.explored.length} explored nodes…`);
+  document.getElementById('progressWrap').style.display = 'block';
+
+  let i = 0;
+  animTimer = setInterval(() => {
+    i++;
+    if (i <= res.explored.length) {
+      renderAll(res.explored.slice(0, i));
+      const pct = Math.round((i / res.explored.length) * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+    } else {
+      clearInterval(animTimer); animTimer = null;
+      renderAll(null, new Set(res.path));
+      document.getElementById('progressBar').style.width = '100%';
+      setTimeout(() => {
+        document.getElementById('progressWrap').style.display = 'none';
+        document.getElementById('progressBar').style.width = '0%';
+      }, 600);
+      busy = false;
+      btn.classList.remove('searching');
+      document.getElementById('btnLabel').textContent = 'Find Path';
+      document.getElementById('statusDot').className = res.path.length ? 'status-dot' : 'status-dot error';
+      setStatus(
+        res.path.length ? 'done' : 'error',
+        res.path.length
+          ? `Path found! Cost: ${res.cost} · Length: ${res.path.length} steps · ${res.n} nodes explored.`
+          : 'No path found — destination is unreachable.'
+      );
+    }
+  }, 13);
+}
+
+/* ─── UI updates ─── */
+function updateStats(astar, ucs) {
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  set('s-astar-cost', astar.cost ?? '∞');
+  set('s-ucs-cost',   ucs.cost   ?? '∞');
+  set('s-astar-n',    astar.n);
+  set('s-ucs-n',      ucs.n);
+  set('s-astar-len',  astar.path.length || '—');
+  set('s-ucs-len',    ucs.path.length   || '—');
+  set('s-astar-ms',   astar.ms);
+  set('s-ucs-ms',     ucs.ms);
+
+  const noPath = document.getElementById('noPathMsg');
+  noPath.style.display = astar.cost === null ? 'block' : 'none';
+
+  const diff = ucs.n - astar.n;
+  const pct  = ucs.n > 0 ? Math.round(diff/ucs.n*100) : 0;
+  let insight = '';
+  if (astar.cost === null) {
+    insight = 'Both algorithms could not reach the destination.';
+  } else if (diff > 0) {
+    insight = `<span class="insight-line"><span class="highlight">A* saved ${diff} node explorations</span> (${pct}% fewer than UCS).</span>`;
+  } else if (diff < 0) {
+    insight = `<span class="insight-line">UCS explored ${-diff} fewer nodes this time.</span>`;
+  } else {
+    insight = `<span class="insight-line">Both algorithms explored the same number of nodes.</span>`;
+  }
+  if (astar.cost != null && astar.cost === ucs.cost) {
+    insight += `<span class="insight-line" style="color:var(--green)">✓ Both found equal-cost optimal paths.</span>`;
+  }
+  document.getElementById('insightBox').innerHTML = insight || 'Run complete.';
+}
+
+function resetStats() {
+  ['s-astar-cost','s-ucs-cost','s-astar-n','s-ucs-n','s-astar-len','s-ucs-len','s-astar-ms','s-ucs-ms']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.textContent='—'; });
+  document.getElementById('noPathMsg').style.display = 'none';
+  document.getElementById('insightBox').textContent  = 'Run the algorithm to see comparison insights.';
+}
+
+function updateGridInfo() {
+  let blocked=0, traffic=0;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    if (grid[r][c]==='b') blocked++;
+    else if (grid[r][c]==='t'||grid[r][c]==='h') traffic++;
+  }
+  document.getElementById('info-blocked').textContent = blocked;
+  document.getElementById('info-traffic').textContent = traffic;
+}
+
+function setStatus(type, msg) {
+  document.getElementById('statusText').textContent = msg;
+}
+
+/* ─── Keyboard shortcuts ─── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); findPath(); }
+  const map = { '1':'start', '2':'end', '3':'b', '4':'t', '5':'h', '0':'erase' };
+  if (map[e.key]) setTool(map[e.key]);
+});
+
+/* ─── Resize ─── */
+window.addEventListener('resize', () => {
+  if (!grid) return;
+  buildGridDOM();
+});
+
+/* ─── Boot ─── */
+initMap(false);
+document.getElementById('heurSel').addEventListener('change', function() {
+  heur = this.value;
+  updateAlgoExplain();
+});
+</script>
+</body>
+</html>
