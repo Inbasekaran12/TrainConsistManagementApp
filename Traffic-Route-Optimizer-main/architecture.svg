@@ -1,0 +1,29 @@
+<svg width="640" height="320" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Application architecture diagram">
+  <style>
+    .box { fill: #1e293b; stroke: #94a3b8; stroke-width: 2; rx: 16; }
+    .text { fill: #e2e8f0; font-family: Inter, system-ui, sans-serif; font-size: 14px; }
+    .title { fill: #60a5fa; font-size: 18px; font-weight: 700; }
+    .arrow { stroke: #cbd5e1; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <path d="M0,0 L10,3.5 L0,7 Z" fill="#cbd5e1" />
+    </marker>
+  </defs>
+  <text x="320" y="28" text-anchor="middle" class="title">Architecture Overview</text>
+  <rect x="56" y="72" width="168" height="96" class="box" />
+  <text x="140" y="100" text-anchor="middle" class="text">Browser</text>
+  <text x="140" y="124" text-anchor="middle" class="text">(User Interaction)</text>
+
+  <rect x="236" y="72" width="168" height="96" class="box" />
+  <text x="320" y="100" text-anchor="middle" class="text">Static Frontend</text>
+  <text x="320" y="124" text-anchor="middle" class="text">HTML / CSS / JS</text>
+
+  <rect x="416" y="72" width="168" height="96" class="box" />
+  <text x="500" y="100" text-anchor="middle" class="text">Pathfinding Engine</text>
+  <text x="500" y="124" text-anchor="middle" class="text">A* + UCS Algorithms</text>
+
+  <path class="arrow" d="M224,120 L236,120" />
+  <path class="arrow" d="M404,120 L416,120" />
+  <text x="320" y="152" text-anchor="middle" class="text">Real-time animation & results</text>
+</svg>

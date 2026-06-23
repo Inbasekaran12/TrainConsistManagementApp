@@ -1,48 +1,68 @@
- Smart Traffic Route Optimizer
-An interactive web application that demonstrates how AI-based pathfinding algorithms find the most efficient route in a dynamic environment.
+# Smart Traffic Route Optimizer
 
- Overview
-This project simulates real-world traffic navigation using Artificial Intelligence concepts. Users can create a custom grid, add obstacles or traffic conditions, and visualize how algorithms determine the optimal path step by step.
+A browser-based pathfinding visualization app for interactive route planning and algorithm comparison. The application uses A\* and Uniform Cost Search to demonstrate pathfinding on a configurable grid, with real-time exploration and clear visual feedback.
 
- Problem Statement
-Finding the best route in real-world traffic is complex due to changing conditions such as congestion, roadblocks, and varying travel costs. Traditional methods often fail to adapt dynamically.
+## Technologies
 
- Solution
-This application uses AI search algorithms like **A\*** and **Uniform Cost Search (UCS)** to compute the most efficient path while considering traffic conditions. It also provides a visual representation of how the algorithm explores and reaches the solution.
+- HTML
+- CSS
+- JavaScript (ES Modules)
+- GitHub Actions
+- Jest
+- GitHub Pages
 
-Features
-- Interactive grid-based map  
-- Set start and destination points  
-- Add obstacles and traffic conditions  
-- A* and UCS algorithm support  
-- Real-time pathfinding visualization  
-- Performance comparison (cost, nodes explored, time)  
-- Clean and modern UI  
+## Installation
 
-Tech Stack
-- HTML5  
-- CSS3  
-- JavaScript (Vanilla)  
+```bash
+npm install
+npm start
+```
 
-AI Concepts Used
-- A* Search Algorithm  
-- Uniform Cost Search  
-- Heuristic Functions (Euclidean & Manhattan)  
-- Graph-based Problem Solving  
-- Priority Queue (Min Heap)  
+Open `http://localhost:8080` to launch the app locally.
 
-Demo
-Live Demo:  
-https://trafficrouteoptimizer.vercel.app
+## Repository Structure
 
-or 
+- `src/` - source assets: `index.html`, `styles.css`, `script.js`, `algorithms.mjs`
+- `__tests__/` - automated unit tests
+- `.github/workflows/` - CI and deployment pipelines
+- `.gitignore` - local environment and generated files ignored
+- `package.json` - project metadata and scripts
 
-Scan QR to try the application 
-![QR traffic route Optimizer](https://github.com/user-attachments/assets/28f2d933-3e0f-47be-a187-6a6daed0bb23)
+## What’s Included
 
-Screenshots
-<img width="1888" height="912" alt="Screenshot 2026-03-24 171456" src="https://github.com/user-attachments/assets/b177a158-6651-41f8-b681-c5e5fb414c8f" />
+- Interactive grid editing with start/target placement
+- A\* and Uniform Cost Search visualization
+- Reset and clear walls controls
+- Responsive UI for desktop and mobile
+- GitHub Actions CI for automated testing
+- GitHub Pages deployment configured
+- Architecture diagram included in the repo
 
+## Performance Notes
 
+This frontend-only static app is optimized for speed using minimal DOM updates and CSS transitions. The page size is lightweight and can achieve fast load times on modern browsers.
 
- 
+## Deployment
+
+GitHub Pages is configured to publish the `src/` folder from the `gh-pages` branch. After the first push to `main`, the repository can be published to:
+
+https://bruce12-glitch.github.io/Smart-Traffic-Route-/
+
+Add that URL to the repository About section to make it clickable for recruiters.
+
+## Tests
+
+Run the test suite with:
+
+```bash
+npm test
+```
+
+## Architecture
+
+![Architecture diagram](architecture.svg)
+
+## Notes
+
+- No backend is required for this application.
+- The repository is ready for production deployment as a static site.
