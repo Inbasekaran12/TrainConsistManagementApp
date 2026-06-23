@@ -46,7 +46,7 @@ This frontend-only static app is optimized for speed using minimal DOM updates a
 
 GitHub Pages is configured to publish the `src/` folder from the `gh-pages` branch. After the first push to `main`, the repository can be published to:
 
-https://bruce12-glitch.github.io/Smart-Traffic-Route-/
+https://inbasekaran12.github.io/TrainConsistManagementApp/
 
 Add that URL to the repository About section to make it clickable for recruiters.
 
