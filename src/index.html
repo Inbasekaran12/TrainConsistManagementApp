@@ -1,20 +1,26 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- Meta information for character encoding and viewport settings -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Traffic Route Optimizer</title>
-    <!-- Link to a CSS stylesheet for styling the web page -->
-    <link rel="stylesheet" href="styles.css" />
+    <meta
+      name="description"
+      content="Visualize A* and Uniform Cost Search on a configurable traffic grid."
+    />
+    <link rel="stylesheet" href="./styles/main.css" />
   </head>
   <body>
-    <!-- Header section for the page -->
-    <header>
-      <h1>Welcome to the Smart Traffic Route Optimizer</h1>
+    <header class="hero">
+      <p class="eyebrow">Interactive Route Planning</p>
+      <h1>Smart Traffic Route Optimizer</h1>
+      <p class="hero-copy">
+        Compare A* and Uniform Cost Search on a live grid, place roadblocks, and simulate
+        high-traffic corridors to see how each algorithm reacts.
+      </p>
     </header>
     <main>
-      <section class="grid-controls">
+      <section class="panel grid-controls">
         <h2>Grid Controls</h2>
         <div class="controls-row">
           <label>
@@ -27,7 +33,7 @@
           </label>
           <button id="create-grid" type="button">Create Grid</button>
           <button id="reset-grid" type="button" class="secondary">Reset Grid</button>
-          <button id="clear-walls" type="button" class="secondary">Clear Walls</button>
+          <button id="clear-walls" type="button" class="secondary">Clear Obstacles</button>
         </div>
         <div class="controls-row">
           <label>
@@ -48,32 +54,31 @@
           <button id="run-search" type="button">Run Search</button>
         </div>
         <div class="mode-picker">
-          <label><input type="radio" name="mode" value="wall" checked /> Add/Remove Wall</label>
+          <label><input type="radio" name="mode" value="wall" checked /> Toggle Wall</label>
+          <label><input type="radio" name="mode" value="traffic" /> Toggle Traffic</label>
           <label><input type="radio" name="mode" value="start" /> Set Start</label>
           <label><input type="radio" name="mode" value="target" /> Set Target</label>
         </div>
       </section>
 
-      <section class="board-container">
-        <div id="grid" aria-label="Pathfinding grid"></div>
+      <section class="panel board-container">
+        <div id="grid" aria-label="Pathfinding grid" role="grid"></div>
       </section>
 
-      <section class="stats-panel">
-        <h2>Instructions & Results</h2>
+      <section class="panel stats-panel">
+        <h2>Instructions and Results</h2>
         <p id="output-info">
-          Click a cell to add a wall or set start/target, then run the selected algorithm.
+          Click a cell to add walls or traffic, move the start and target, then run an algorithm.
         </p>
         <p>
-          Start is green, target is red, walls are dark gray, explored nodes are blue, and the path
-          is yellow.
+          Start is green, target is red, walls are slate, traffic is orange, explored nodes are
+          blue, and the final route is yellow.
         </p>
       </section>
     </main>
-    <!-- Footer of the page for copyright information -->
     <footer>
       <p>&copy; 2026 Smart Traffic Route Optimizer</p>
     </footer>
-    <!-- Link to JavaScript file for handling route optimization logic -->
-    <script type="module" src="script.js"></script>
+    <script type="module" src="./js/app.js"></script>
   </body>
 </html>
